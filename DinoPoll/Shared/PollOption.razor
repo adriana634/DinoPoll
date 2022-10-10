@@ -1,0 +1,52 @@
+﻿<div class="row">
+    <div class="col">
+        <div class="form-floating mb-3">
+            <input @onchange="OptionTextChanged"
+                    id="@($"option-{OptionNumber}-text")" 
+                    value="@text" 
+                    class="form-control" 
+                    placeholder="@($"Option {OptionNumber}: Text")" 
+                    required />
+            <label for="@($"option-{OptionNumber}-text")">@($"Option {OptionNumber}: Text")</label>
+        </div>
+    </div>
+    <div class="col">
+        <div class="form-floating mb-3">
+            <input @onchange="OptionWikipediaUrlChanged"
+                   id="@($"option-{OptionNumber}-wikipedia-url")"
+                   value="@wikipediaUrl"
+                   class="form-control"
+                   placeholder="@($"Option {OptionNumber}: Wikipedia URL")"
+                   required />
+            <label for="@($"option-{OptionNumber}-wikipedia-url")">@($"Option {OptionNumber}: Wikipedia URL")</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public int OptionNumber { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<string> OnOptionTextChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<string> OnOptionWikipediaUrlChanged { get; set; }
+
+    private string text;
+    private string wikipediaUrl;
+
+    private async Task OptionTextChanged(ChangeEventArgs e)
+    {
+        text = e?.Value?.ToString();
+        
+        await OnOptionTextChanged.InvokeAsync(text);
+    }
+
+    private async Task OptionWikipediaUrlChanged(ChangeEventArgs e)
+    {
+        wikipediaUrl = e?.Value?.ToString();
+        
+        await OnOptionWikipediaUrlChanged.InvokeAsync(wikipediaUrl);
+    }
+}

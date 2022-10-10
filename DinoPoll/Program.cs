@@ -1,6 +1,5 @@
 using DinoPoll.Data;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddDbContextFactory<DinoPollContext>(opts => 
+    opts.UseSqlServer(builder.Configuration.GetConnectionString("DinoPoll")));
 
 var app = builder.Build();
 

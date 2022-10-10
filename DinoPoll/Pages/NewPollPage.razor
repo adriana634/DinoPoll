@@ -1,0 +1,171 @@
+﻿@page "/poll/new"
+
+@using DinoPoll.Data
+@using DinoPoll.Forms
+@using Microsoft.EntityFrameworkCore
+
+@implements IDisposable
+@inject IDbContextFactory<DinoPollContext> DbFactory
+
+@inject NavigationManager NavigationManager
+
+<PageTitle>New Poll - DinoPoll</PageTitle>
+
+<div class="container">
+    <h2>New Poll</h2>
+
+    @if (saving)
+    {
+        <p>Saving...</p>
+    }
+    else
+    {
+        <EditForm Model="@poll" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label for="question" class="form-label">Question</label>
+                <InputText id="question" @bind-Value="poll.Question" class="form-control" placeholder="Which is your favorite browser?" />
+            </div>
+
+            <div class="mb-3">
+                <label for="participants" class="form-label">Participants</label>
+                <InputNumber id="participants" @bind-Value="poll.Participants" class="form-control" />
+            </div>
+
+            <h6>Options</h6>
+
+            @for (int i = 0; i < options; i++)
+            {
+                var optionNumber = i + 1;
+
+                <PollOption OptionNumber="optionNumber"
+                    OnOptionTextChanged="(optionText) => OptionTextChanged(optionNumber, optionText)"
+                    OnOptionWikipediaUrlChanged="(wikipediaURL) => OptionWikipediaUrlChanged(optionNumber, wikipediaURL)" />
+            }
+
+            <div class="mb-3">
+                <div class="row row-cols-auto">
+                    <div class="col">
+                        <button type="button" class="btn btn-outline-secondary" @onclick="HandleNewOption">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"></path>
+                            </svg>
+                            Add Option
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button type="button" class="btn btn-outline-danger" @onclick="HandleRemoveOption">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"></path>
+                            </svg>
+                            Remove Option
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg">Create Poll</button>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private NewPoll poll = new();
+    private int options = 2;
+
+    private DinoPollContext? context;
+
+    private bool saving = false;
+
+    private async Task HandleValidSubmit()
+    {
+        saving = true;
+
+        try
+        {
+            context = DbFactory.CreateDbContext();
+
+            if (context is not null && context.Polls is not null)
+            {
+                var dbNewPoll = new Poll
+                {
+                    Question = poll.Question,
+                    Participants = (byte)poll.Participants,
+                    Options = new List<Option>()
+                };
+
+                for (int i = 0; i < poll.Options.Count; i++)
+                {
+                    var order = (byte)(i + 1);
+                    dbNewPoll.Options.Add(new Option
+                    {
+                        Text = poll.Options[i].Text,
+                        WikipediaURL = poll.Options[i].WikipediaURL,
+                        Order = order
+                    });
+                }
+
+                context.Polls.Add(dbNewPoll);
+                await context.SaveChangesAsync();
+
+                NavigationManager.NavigateTo($"/poll/{dbNewPoll.PollId}");
+            }
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private void HandleNewOption() 
+    {
+        options += 1;
+    }
+
+    private void HandleRemoveOption()
+    {
+        if (options > 2) 
+        {
+            var option = poll.Options.ElementAtOrDefault(options - 1);
+            
+            if (option is not null) 
+            {
+                poll.Options.Remove(option);
+            }
+            
+            options -= 1;
+        }
+    }
+
+    private NewOption GetOrCreateNewOption(int optionNumber) 
+    {
+        var option = poll.Options.ElementAtOrDefault(optionNumber - 1);
+
+        if (option is null)
+        {
+            option = new NewOption();
+            poll.Options.Add(option);
+        }
+
+        return option;
+    }
+
+    private void OptionTextChanged(int optionNumber, string optionText) 
+    {
+        var option = GetOrCreateNewOption(optionNumber);
+        option.Text = optionText;
+    }
+
+    private void OptionWikipediaUrlChanged(int optionNumber, string wikipediaUrl)
+    {
+        var option = GetOrCreateNewOption(optionNumber);
+        option.WikipediaURL = wikipediaUrl;
+    }
+
+    public void Dispose()
+    {
+        context?.Dispose();
+    }
+}

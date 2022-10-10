@@ -1,0 +1,153 @@
+﻿@page "/poll/{id:guid}"
+@using DinoPoll.Data
+@using Microsoft.EntityFrameworkCore
+
+@implements IDisposable
+@inject IDbContextFactory<DinoPollContext> DbFactory
+
+@inject NavigationManager NavigationManager
+
+<div class="container">
+    @if (loading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <h1>@question</h1>
+
+        @if (showPollResults)
+        {
+            <h3>Poll Results:</h3>
+
+            <div class="votes">
+                @foreach (var option in options)
+                {
+                    var percentage = (option.Votes / (float)participants) * 100;
+
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col">@option.Text</div>
+                            <div class="col votes-number">(@option.Votes votes)</div>
+                        </div>
+                        <div class="progress vote">
+                            <div class="progress-bar" role="progressbar" aria-label="@($"{option.Text} votes percentage")" style="@($"width: {percentage}%;")" aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100">@($"{percentage}%")</div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <p>Participants: @participants</p>
+        }
+        else
+        {
+            <EditForm Model="@pollVote" OnValidSubmit="HandleVote">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                @foreach (var option in options)
+                {
+                    <div class="form-check mb-3">
+                        <input id=@($"answer-{option.Order}")
+                    class="form-check-input"
+                    type="radio"
+                    name="answer"
+                    value="@option.OptionId"
+                    @onchange="OptionSelected">
+                        <label class="form-check-label" for=@($"answer-{option.Order}")>
+                            <a href="@option.WikipediaURL">@option.Text</a>
+                        </label>
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary">Vote</button>
+            </EditForm>
+        }
+    }
+</div>
+
+<style>
+    .votes {
+        max-width: 40%;
+    }
+    .vote {
+        height: 25px;
+    }
+    .votes-number {
+        text-align: right;
+    }
+</style>
+
+@code {
+    public class PollVote
+    {
+        public int? OptionId { get; set; }
+    }
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private DinoPollContext? context;
+
+    private Poll poll;
+    private string question;
+    private byte participants;
+    private IEnumerable<Option> options;
+    private bool showPollResults;
+
+    private PollVote pollVote = new();
+
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+
+        context = DbFactory.CreateDbContext();
+
+        if (context is not null && context.Polls is not null)
+        {
+            var dbPoll = await context.Polls
+                .Include(poll => poll.Options.OrderBy(option => option.Order))
+                .SingleOrDefaultAsync(poll => poll.PollId == Id);
+
+            if (dbPoll is not null)
+            {
+                poll = dbPoll;
+                question = dbPoll.Question;
+                participants = dbPoll.Participants;
+                showPollResults = participants == dbPoll.Options.Sum(option => option.Votes);
+                options = (showPollResults) 
+                    ? dbPoll.Options.OrderByDescending(option => option.Votes) 
+                    : dbPoll.Options.AsEnumerable();
+                
+                loading = false;
+            }
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private void OptionSelected(ChangeEventArgs args) 
+    {
+        if (args.Value is not null) 
+        {
+            pollVote.OptionId = int.Parse(args.Value!.ToString()!);
+        }
+    }
+
+    private async Task HandleVote() 
+    {
+        var option = poll.Options.Single(option => option.OptionId == pollVote.OptionId);
+        option.Votes += 1;
+
+        await context!.SaveChangesAsync();
+
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        context?.Dispose();
+    }
+}
