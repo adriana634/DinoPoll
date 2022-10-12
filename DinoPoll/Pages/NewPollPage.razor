@@ -1,11 +1,13 @@
 ﻿@page "/poll/new"
 
+@using AutoMapper
 @using DinoPoll.Data
 @using DinoPoll.Forms
+@using DinoPoll.Services
 @using Microsoft.EntityFrameworkCore
 
-@implements IDisposable
-@inject IDbContextFactory<DinoPollContext> DbFactory
+@inject IMapper Mapper
+@inject IPollService PollService
 
 @inject NavigationManager NavigationManager
 
@@ -20,18 +22,18 @@
     }
     else
     {
-        <EditForm Model="@poll" OnValidSubmit="@HandleValidSubmit">
+        <EditForm Model="@formPoll" OnValidSubmit="@HandleValidSubmit">
             <ObjectGraphDataAnnotationsValidator />
             <ValidationSummary />
 
             <div class="mb-3">
                 <label for="question" class="form-label">Question</label>
-                <InputText id="question" @bind-Value="poll.Question" class="form-control" placeholder="Which is your favorite browser?" />
+                <InputText id="question" @bind-Value="formPoll.Question" class="form-control" placeholder="Which is your favorite browser?" />
             </div>
 
             <div class="mb-3">
                 <label for="participants" class="form-label">Participants</label>
-                <InputNumber id="participants" @bind-Value="poll.Participants" class="form-control" />
+                <InputNumber id="participants" @bind-Value="formPoll.Participants" class="form-control" />
             </div>
 
             <h6>Options</h6>
@@ -72,7 +74,7 @@
 </div>
 
 @code {
-    private NewPoll poll = new();
+    private NewPoll formPoll = new();
     private int options = 2;
 
     private DinoPollContext? context;
@@ -83,33 +85,10 @@
     {
         saving = true;
 
-        context = DbFactory.CreateDbContext();
+        var dbPoll = Mapper.Map<Poll>(formPoll);
+        await PollService.CreatePoll(dbPoll);
 
-        if (context is not null && context.Polls is not null)
-        {
-            var dbNewPoll = new Poll
-            {
-                Question = poll.Question,
-                Participants = (byte)poll.Participants,
-                Options = new List<Option>()
-            };
-
-            for (int i = 0; i < poll.Options.Count; i++)
-            {
-                var order = (byte)(i + 1);
-                dbNewPoll.Options.Add(new Option
-                {
-                    Text = poll.Options[i].Text,
-                    WikipediaURL = poll.Options[i].WikipediaURL,
-                    Order = order
-                });
-            }
-
-            context.Polls.Add(dbNewPoll);
-            await context.SaveChangesAsync();
-
-            NavigationManager.NavigateTo($"/poll/{dbNewPoll.PollId}");
-        }
+        NavigationManager.NavigateTo($"/poll/{dbPoll.PollId}");
     }
 
     private void HandleNewOption() 
@@ -121,11 +100,11 @@
     {
         if (options > 2) 
         {
-            var option = poll.Options.ElementAtOrDefault(options - 1);
+            var option = formPoll.Options.ElementAtOrDefault(options - 1);
             
             if (option is not null) 
             {
-                poll.Options.Remove(option);
+                formPoll.Options.Remove(option);
             }
             
             options -= 1;
@@ -134,12 +113,12 @@
 
     private NewOption GetOrCreateNewOption(int optionNumber) 
     {
-        var option = poll.Options.ElementAtOrDefault(optionNumber - 1);
+        var option = formPoll.Options.ElementAtOrDefault(optionNumber - 1);
 
         if (option is null)
         {
             option = new NewOption();
-            poll.Options.Add(option);
+            formPoll.Options.Add(option);
         }
 
         return option;
@@ -155,10 +134,5 @@
     {
         var option = GetOrCreateNewOption(optionNumber);
         option.WikipediaURL = wikipediaUrl;
-    }
-
-    public void Dispose()
-    {
-        context?.Dispose();
     }
 }

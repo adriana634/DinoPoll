@@ -1,4 +1,6 @@
 using DinoPoll.Data;
+using DinoPoll.Mapper;
+using DinoPoll.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +10,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddDbContextFactory<DinoPollContext>(opts => 
     opts.UseSqlServer(builder.Configuration.GetConnectionString("DinoPoll")));
+builder.Services.AddTransient<IPollService, PollService>();
+builder.Services.AddAutoMapper(typeof(PollProfile));
 
 var app = builder.Build();
 
