@@ -1,6 +1,7 @@
 ﻿@page "/poll/{id:guid}"
 @using DinoPoll.Data
 @using Microsoft.EntityFrameworkCore
+@using System.Globalization
 
 @implements IDisposable
 @inject IDbContextFactory<DinoPollContext> DbFactory
@@ -23,7 +24,11 @@
             <div class="votes">
                 @foreach (var option in options)
                 {
-                    var percentage = (option.Votes / (float)participants) * 100;
+                    var ratio = option.Votes / (float)participants;
+                    var percentage = ratio * 100;
+                    
+                    var formattedPercentageWithoutSymbol = $"{percentage:0.##}";
+                    var formattedPercentageWithSymbol = $"{ratio:0.##%}";
 
                     <div class="mb-3">
                         <div class="row">
@@ -31,7 +36,11 @@
                             <div class="col votes-number">(@option.Votes votes)</div>
                         </div>
                         <div class="progress vote">
-                            <div class="progress-bar" role="progressbar" aria-label="@($"{option.Text} votes percentage")" style="@($"width: {percentage}%;")" aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100">@($"{percentage}%")</div>
+                            <div class="progress-bar" role="progressbar" aria-label="@($"{option.Text} votes percentage")" 
+                                style="@($"width: {percentage}%;")"
+                                aria-valuenow="@formattedPercentageWithoutSymbol" aria-valuemin="0" aria-valuemax="100">
+                                @formattedPercentageWithSymbol
+                            </div>
                         </div>
                     </div>
                 }
