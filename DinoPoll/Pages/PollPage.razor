@@ -55,12 +55,19 @@
                     value="@option.OptionId"
                     @onchange="OptionSelected">
                         <label class="form-check-label" for=@($"answer-{option.Order}")>
-                            <a href="@option.WikipediaURL">@option.Text</a>
+                            <a href="@option.WikipediaURL" target="_blank">@option.Text</a>
                         </label>
                     </div>
                 }
 
-                <button type="submit" class="btn btn-primary">Vote</button>
+                @if (pollVote.OptionId is not null) 
+                {
+                    <button type="submit" class="btn btn-primary">Vote</button>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-primary" disabled>Vote</button>
+                }
             </EditForm>
         }
     }
@@ -138,12 +145,15 @@
 
     private async Task HandleVote() 
     {
-        var option = poll.Options.Single(option => option.OptionId == pollVote.OptionId);
-        option.Votes += 1;
+        if (pollVote.OptionId is not null) 
+        {
+            var option = poll.Options.Single(option => option.OptionId == pollVote.OptionId);
+            option.Votes += 1;
 
-        await context!.SaveChangesAsync();
+            await context!.SaveChangesAsync();
 
-        NavigationManager.NavigateTo("/");
+            NavigationManager.NavigateTo("/");
+        }
     }
 
     public void Dispose()

@@ -11,13 +11,14 @@ namespace DinoPoll.Forms
         [Range(2, 255)]
         public int Participants { get; set; } = 2;
 
+        [ValidateComplexType]
         public List<NewOption> Options { get; set; } = new List<NewOption>();
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (Options.Count == 0)
+            if (Options.Count < 2)
             {
-                yield return new ValidationResult("Provide at least one option.", new[] { nameof(Options) });
+                yield return new ValidationResult("Provide at least two options.", new[] { nameof(Options) });
             }
         }
     }

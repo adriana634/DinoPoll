@@ -12,7 +12,7 @@
 <PageTitle>New Poll - DinoPoll</PageTitle>
 
 <div class="container">
-    <h2>New Poll</h2>
+    <h2>New Poll 🦕</h2>
 
     @if (saving)
     {
@@ -21,7 +21,7 @@
     else
     {
         <EditForm Model="@poll" OnValidSubmit="@HandleValidSubmit">
-            <DataAnnotationsValidator />
+            <ObjectGraphDataAnnotationsValidator />
             <ValidationSummary />
 
             <div class="mb-3">
