@@ -83,39 +83,32 @@
     {
         saving = true;
 
-        try
-        {
-            context = DbFactory.CreateDbContext();
+        context = DbFactory.CreateDbContext();
 
-            if (context is not null && context.Polls is not null)
+        if (context is not null && context.Polls is not null)
+        {
+            var dbNewPoll = new Poll
             {
-                var dbNewPoll = new Poll
+                Question = poll.Question,
+                Participants = (byte)poll.Participants,
+                Options = new List<Option>()
+            };
+
+            for (int i = 0; i < poll.Options.Count; i++)
+            {
+                var order = (byte)(i + 1);
+                dbNewPoll.Options.Add(new Option
                 {
-                    Question = poll.Question,
-                    Participants = (byte)poll.Participants,
-                    Options = new List<Option>()
-                };
-
-                for (int i = 0; i < poll.Options.Count; i++)
-                {
-                    var order = (byte)(i + 1);
-                    dbNewPoll.Options.Add(new Option
-                    {
-                        Text = poll.Options[i].Text,
-                        WikipediaURL = poll.Options[i].WikipediaURL,
-                        Order = order
-                    });
-                }
-
-                context.Polls.Add(dbNewPoll);
-                await context.SaveChangesAsync();
-
-                NavigationManager.NavigateTo($"/poll/{dbNewPoll.PollId}");
+                    Text = poll.Options[i].Text,
+                    WikipediaURL = poll.Options[i].WikipediaURL,
+                    Order = order
+                });
             }
-        }
-        finally
-        {
-            saving = false;
+
+            context.Polls.Add(dbNewPoll);
+            await context.SaveChangesAsync();
+
+            NavigationManager.NavigateTo($"/poll/{dbNewPoll.PollId}");
         }
     }
 
