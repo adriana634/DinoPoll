@@ -20,7 +20,14 @@
 
         @if (showPollResults)
         {
-            <PollResults Poll="poll" />
+            <div class="row">
+                <div class="col pt-5">
+                    <PollResults Poll="poll" />
+                </div>
+                <div class="col">
+                    <PollChart Poll="poll" />
+                </div>
+            </div>
         }
         else
         {

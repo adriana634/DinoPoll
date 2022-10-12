@@ -1,0 +1,45 @@
+﻿@using Plotly.Blazor
+@using Plotly.Blazor.LayoutLib
+@using Plotly.Blazor.Traces
+
+<PlotlyChart Id="PollChart" Config="config" Layout="layout" Data="data" @ref="chart" />
+
+@code {
+    [Parameter, EditorRequired]
+    public Poll Poll { get; set; }
+
+    private PlotlyChart chart;
+
+    private Config config = new Config
+    {
+        Responsive = true
+    };
+
+    private Layout layout = new Layout
+    {
+        Height = 500
+    };
+
+    private List<ITrace> data = new List<ITrace>();
+
+    protected override void OnParametersSet()
+    {
+        List<object> labels = new List<object>();
+        List<object> values = new List<object>();
+
+        foreach (var option in Poll.Options)
+        {
+            labels.Add(option.Text);
+            values.Add(option.Votes);
+        }
+
+        data.Clear();
+        data.Add(new Pie
+        {
+            Values = values,
+            Labels = labels
+        });
+
+        base.OnParametersSet();
+    }
+}
