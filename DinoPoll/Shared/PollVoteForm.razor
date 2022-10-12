@@ -1,0 +1,56 @@
+﻿@inject IPollService PollService
+@inject NavigationManager NavigationManager
+
+<EditForm Model="@formPollVote" OnValidSubmit="HandleVote">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @foreach (var option in Poll.Options)
+    {
+        <div class="form-check mb-3">
+            <input id=@($"answer-{option.Order}")
+               class="form-check-input"
+               type="radio"
+               name="answer"
+               value="@option.OptionId"
+               @onchange="OptionSelected">
+            <label class="form-check-label" for=@($"answer-{option.Order}")>
+                <a href="@option.WikipediaURL" target="_blank">@option.Text</a>
+            </label>
+        </div>
+    }
+
+    @if (formPollVote.OptionId is not null)
+    {
+        <button type="submit" class="btn btn-primary">Vote</button>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary" disabled>Vote</button>
+    }
+</EditForm>
+
+@code {
+    private PollVote formPollVote = new();
+
+    [Parameter, EditorRequired]
+    public Poll Poll { get; set; }
+
+    private void OptionSelected(ChangeEventArgs args)
+    {
+        if (args.Value is not null)
+        {
+            formPollVote.OptionId = int.Parse(args.Value!.ToString()!);
+        }
+    }
+
+    private async Task HandleVote()
+    {
+        if (formPollVote.OptionId is not null)
+        {
+            await PollService.VoteOption(Poll.PollId, (int)formPollVote.OptionId);
+
+            //NavigationManager.NavigateTo("/");
+        }
+    }
+}
