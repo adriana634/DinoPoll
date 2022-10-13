@@ -4,6 +4,7 @@ using DinoPoll.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DinoPoll.Migrations
 {
     [DbContext(typeof(DinoPollContext))]
-    partial class DinoPollContextModelSnapshot : ModelSnapshot
+    [Migration("20221013195232_WikipediaURL_NullableField")]
+    partial class WikipediaURL_NullableField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

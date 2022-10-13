@@ -15,10 +15,8 @@ namespace DinoPoll.Data
         [Required]
         public string Text { get; set; }
 
-        [Required]
-        [Url]
         [RegularExpression("^https:\\/\\/en.wikipedia.org\\/wiki\\/.+$")]
-        public string WikipediaURL { get; set; }
+        public string? WikipediaURL { get; set; }
 
         [Required]
         public byte Votes { get; set; }

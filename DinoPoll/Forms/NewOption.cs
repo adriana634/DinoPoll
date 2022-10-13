@@ -7,9 +7,8 @@ namespace DinoPoll.Forms
         [Required]
         public string Text { get; set; }
 
-        [Required]
         [Display(Name = "Wikipedia URL")]
         [RegularExpression("^https:\\/\\/en.wikipedia.org\\/wiki\\/.+$", ErrorMessage = "Wikipedia URL is required.")]
-        public string WikipediaURL { get; set; }
+        public string? WikipediaURL { get; set; }
     }
 }
