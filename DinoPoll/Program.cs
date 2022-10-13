@@ -12,6 +12,7 @@ builder.Services.AddDbContextFactory<DinoPollContext>(opts =>
     opts.UseSqlServer(builder.Configuration.GetConnectionString("DinoPoll")));
 builder.Services.AddTransient<IPollService, PollService>();
 builder.Services.AddAutoMapper(typeof(PollProfile));
+builder.Services.AddSingleton<IDinoPollCache, DinoPollCache>();
 
 var app = builder.Build();
 

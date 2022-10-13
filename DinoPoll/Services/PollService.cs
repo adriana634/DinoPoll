@@ -1,15 +1,18 @@
 ﻿using DinoPoll.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DinoPoll.Services
 {
     public class PollService : IPollService
     {
         private readonly IDbContextFactory<DinoPollContext> DbFactory;
+        private readonly IMemoryCache MemoryCache;
 
-        public PollService(IDbContextFactory<DinoPollContext> dbFactory)
+        public PollService(IDbContextFactory<DinoPollContext> dbFactory, IDinoPollCache memoryCache)
         {
             DbFactory = dbFactory;
+            MemoryCache = memoryCache.Cache;
         }
 
         public async Task CreatePoll(Poll poll)
@@ -20,15 +23,24 @@ namespace DinoPoll.Services
             await context.SaveChangesAsync();
         }
 
-        public async Task<Poll?> GetPoll(Guid id)
+        public Task<Poll?> GetPoll(Guid id)
         {
-            using var context = DbFactory.CreateDbContext();
+            return MemoryCache.GetOrCreateAsync(id, async cacheEntry =>
+            {
+                cacheEntry.SetOptions(new MemoryCacheEntryOptions
+                {
+                    Size = 50,
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
+                });
 
-            var poll = await context.Polls
-                .Include(poll => poll.Options.OrderBy(option => option.Order))
-                .SingleOrDefaultAsync(poll => poll.PollId == id);
+                using var context = DbFactory.CreateDbContext();
 
-            return poll;
+                var poll = await context.Polls
+                    .Include(poll => poll.Options.OrderBy(option => option.Order))
+                    .SingleOrDefaultAsync(poll => poll.PollId == id);
+
+                return poll;
+            });
         }
 
         public async Task VoteOption(Guid pollId, int optionId)
