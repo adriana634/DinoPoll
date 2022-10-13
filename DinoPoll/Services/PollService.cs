@@ -57,10 +57,14 @@ namespace DinoPoll.Services
                 if (poll is not null)
                 {
                     var option = poll.Options.Single(option => option.OptionId == optionId);
-                    option.Votes += 1;
 
-                    await context.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                    if (poll.Options.Sum(option => option.Votes) < poll.Participants)
+                    {
+                        option.Votes += 1;
+
+                        await context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                    }
                 }
             }
             catch (Exception)
